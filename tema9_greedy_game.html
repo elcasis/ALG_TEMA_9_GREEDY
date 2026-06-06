@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tema 9 · Algoritmos Greedy — UNIR</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07080F;--surface:#0F1118;--surface2:#171A26;--surface3:#1D2030;
+  --border:#24273A;--border2:#2E3248;
+  --gold:#FFD166;--gold2:#F4A261;--green:#06D6A0;--cyan:#00B4D8;
+  --red:#EF476F;--purple:#9B5DE5;--pink:#F15BB5;
+  --text:#E8EAF6;--text2:#7E88A8;--text3:#3D4260;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(255,209,102,.06),transparent),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(6,214,160,.04),transparent);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:0 16px 80px}
+
+header{text-align:center;padding:44px 0 32px}
+.badge{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.15em;color:var(--text2);border:1px solid var(--border2);padding:4px 12px;border-radius:4px;margin-bottom:14px;text-transform:uppercase}
+h1{font-family:'Orbitron',monospace;font-size:clamp(1.6rem,5vw,2.8rem);font-weight:900;letter-spacing:-1px;line-height:1.1;margin-bottom:8px}
+h1 .g1{color:var(--gold)}
+h1 .g2{color:var(--green)}
+.hsub{font-size:.82rem;color:var(--text2);font-family:'DM Mono',monospace;margin-bottom:24px}
+.xprow{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.xpl{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--gold);text-transform:uppercase;letter-spacing:.1em}
+.xpt{width:180px;height:7px;background:var(--surface3);border-radius:4px;overflow:hidden}
+.xpf{height:100%;background:linear-gradient(90deg,var(--gold),var(--green));border-radius:4px;transition:width .5s ease;width:0%}
+.xpn{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text2)}
+.lives{display:flex;gap:4px}
+.life{font-size:.95rem;transition:all .3s}
+.life.lost{opacity:.15;filter:grayscale(1)}
+
+.tabs{display:flex;gap:6px;justify-content:center;margin-bottom:26px;flex-wrap:wrap}
+.tab{padding:7px 16px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);font-family:'DM Mono',monospace;font-size:.68rem;cursor:pointer;color:var(--text2);transition:all .2s;text-transform:uppercase;letter-spacing:.07em}
+.tab:hover{border-color:var(--gold);color:var(--gold)}
+.tab.active{background:rgba(255,209,102,.1);border-color:var(--gold);color:var(--gold)}
+.tab.done .ck{display:inline}
+.ck{color:var(--green);margin-right:3px;display:none}
+
+.panel{display:none;animation:fadeUp .3s ease}
+.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:22px;margin-bottom:18px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.card.g::before{background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.card.gr::before{background:linear-gradient(90deg,transparent,var(--green),transparent)}
+.card.cy::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.card.pu::before{background:linear-gradient(90deg,transparent,var(--purple),transparent)}
+.card.re::before{background:linear-gradient(90deg,transparent,var(--red),transparent)}
+.ct{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:700;letter-spacing:.04em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ct.g{color:var(--gold)}.ct.gr{color:var(--green)}.ct.cy{color:var(--cyan)}.ct.pu{color:var(--purple)}.ct.re{color:var(--red)}
+.desc{font-size:.78rem;color:var(--text2);font-family:'DM Mono',monospace;line-height:1.7;margin-bottom:12px}
+
+.sec{text-align:center;margin-bottom:22px}
+.sec h2{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;margin-bottom:6px}
+.sec p{font-size:.8rem;color:var(--text2);font-family:'DM Mono',monospace;line-height:1.6}
+
+/* MONEDAS */
+.coin-scene{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+.coin{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-weight:700;font-size:.85rem;cursor:pointer;border:2px solid;transition:all .2s;position:relative}
+.coin:hover{transform:scale(1.1)}
+.coin.c500{background:rgba(255,209,102,.15);border-color:var(--gold);color:var(--gold)}
+.coin.c200{background:rgba(244,162,97,.15);border-color:var(--gold2);color:var(--gold2)}
+.coin.c100{background:rgba(6,214,160,.12);border-color:var(--green);color:var(--green)}
+.coin.c50{background:rgba(0,180,216,.12);border-color:var(--cyan);color:var(--cyan)}
+.coin.c25{background:rgba(155,93,229,.12);border-color:var(--purple);color:var(--purple)}
+.coin.c5{background:rgba(241,91,181,.12);border-color:var(--pink);color:var(--pink)}
+.coin.c1{background:rgba(255,255,255,.06);border-color:var(--border2);color:var(--text2)}
+.coin.used{opacity:.4;transform:scale(.85)}
+.coin-count{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--gold);color:#000;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.amount-big{font-family:'Orbitron',monospace;font-size:2.8rem;font-weight:900;color:var(--gold);text-align:center;margin:10px 0}
+.change-target{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--text2);text-align:center;margin-bottom:8px}
+.solution-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;min-height:40px;background:var(--surface2);border-radius:8px;padding:8px 12px;border:1px solid var(--border);align-items:center}
+.sol-coin{padding:4px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:700;background:rgba(255,209,102,.15);border:1px solid var(--gold);color:var(--gold);animation:popIn .2s ease}
+@keyframes popIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* MOCHILA */
+.knapsack-scene{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:580px){.knapsack-scene{grid-template-columns:1fr}}
+.item-list{display:flex;flex-direction:column;gap:7px}
+.item-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);transition:all .2s;cursor:pointer}
+.item-row:hover{border-color:var(--gold)}
+.item-row.selected{background:rgba(255,209,102,.08);border-color:var(--gold)}
+.item-row.full{background:rgba(6,214,160,.06);border-color:var(--green)}
+.item-row.partial{background:rgba(0,180,216,.06);border-color:var(--cyan)}
+.item-emoji{font-size:1.3rem}
+.item-info{flex:1;font-family:'DM Mono',monospace;font-size:.72rem}
+.item-name{color:var(--text);font-weight:500}
+.item-stats{color:var(--text2);font-size:.65rem}
+.item-ratio{font-family:'DM Mono',monospace;font-size:.78rem;font-weight:700}
+.bag-visual{background:var(--surface2);border-radius:10px;border:1px solid var(--border);padding:16px;height:100%}
+.bag-weight{height:16px;background:var(--surface3);border-radius:8px;overflow:hidden;margin:8px 0}
+.bag-fill{height:100%;border-radius:8px;transition:width .4s ease}
+.bag-items{display:flex;flex-direction:column;gap:5px;margin-top:10px}
+.bag-item{font-family:'DM Mono',monospace;font-size:.72rem;padding:5px 10px;border-radius:6px;border:1px solid}
+.bag-item.full{background:rgba(6,214,160,.08);border-color:var(--green);color:var(--green)}
+.bag-item.partial{background:rgba(0,180,216,.08);border-color:var(--cyan);color:var(--cyan)}
+
+/* VIAJANTE */
+.tsp-svg{width:100%;background:var(--surface2);border-radius:10px;border:1px solid var(--border);display:block}
+.tsp-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.city-btn{padding:6px 14px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text2);cursor:pointer;transition:all .2s}
+.city-btn:hover{border-color:var(--gold);color:var(--gold)}
+.city-btn.visited{background:rgba(6,214,160,.1);border-color:var(--green);color:var(--green)}
+.city-btn.current{background:rgba(255,209,102,.15);border-color:var(--gold);color:var(--gold)}
+
+/* LOG */
+.log{margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:.68rem;color:var(--text2);min-height:28px;line-height:1.8}
+.log .ok{color:var(--green)}.log .warn{color:var(--gold)}.log .err{color:var(--red)}.log .hi{color:var(--cyan)}
+
+/* BUTTONS */
+.btn{padding:7px 16px;border-radius:7px;border:1px solid;font-family:'DM Mono',monospace;font-size:.7rem;cursor:pointer;transition:all .15s;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.btn-g{background:rgba(255,209,102,.1);border-color:var(--gold);color:var(--gold)}.btn-g:hover{background:rgba(255,209,102,.25)}
+.btn-gr{background:rgba(6,214,160,.1);border-color:var(--green);color:var(--green)}.btn-gr:hover{background:rgba(6,214,160,.25)}
+.btn-cy{background:rgba(0,180,216,.1);border-color:var(--cyan);color:var(--cyan)}.btn-cy:hover{background:rgba(0,180,216,.25)}
+.btn-n{background:var(--surface2);border-color:var(--border2);color:var(--text2)}.btn-n:hover{border-color:var(--text2);color:var(--text)}
+.inp{width:70px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:.82rem;outline:none;transition:border .2s}
+.inp:focus{border-color:var(--gold)}
+
+/* QUIZ */
+.qprog{display:flex;gap:5px;margin-bottom:18px;justify-content:center;flex-wrap:wrap}
+.qd{width:26px;height:5px;border-radius:3px;background:var(--surface3);transition:.3s}
+.qd.done{background:var(--green)}.qd.active{background:var(--gold)}
+.qq{font-size:.95rem;font-weight:500;margin-bottom:16px;line-height:1.6}
+.qopts{display:flex;flex-direction:column;gap:8px}
+.qopt{padding:11px 15px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);cursor:pointer;font-size:.8rem;font-family:'DM Mono',monospace;transition:all .2s;text-align:left;color:var(--text)}
+.qopt:hover:not(.dis){border-color:var(--gold);color:var(--gold)}
+.qopt.correct{background:rgba(6,214,160,.1);border-color:var(--green);color:var(--green)}
+.qopt.wrong{background:rgba(239,71,111,.08);border-color:var(--red);color:var(--red)}
+.qopt.dis{cursor:default}
+.qfb{margin-top:12px;padding:11px;border-radius:8px;font-size:.73rem;font-family:'DM Mono',monospace;line-height:1.7;display:none}
+.qfb.show{display:block}
+.qfb.ok{background:rgba(6,214,160,.07);border:1px solid rgba(6,214,160,.3);color:#7fffd4}
+.qfb.bad{background:rgba(239,71,111,.06);border:1px solid rgba(239,71,111,.25);color:#fca5a5}
+.quiz-final{text-align:center;padding:26px 0;display:none}
+.quiz-final.show{display:block}
+.fscore{font-family:'Orbitron',monospace;font-size:3.2rem;font-weight:900;color:var(--gold)}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:9px 20px;font-family:'DM Mono',monospace;font-size:.75rem;opacity:0;transition:all .3s;z-index:999;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.good{border-color:var(--green);color:var(--green)}
+.toast.bad{border-color:var(--red);color:var(--red)}
+.toast.info{border-color:var(--cyan);color:var(--cyan)}
+
+.elements-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.el-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:.7rem}
+.el-card .el-name{font-weight:700;color:var(--text);margin-bottom:4px}
+.el-card .el-val{color:var(--text2);font-size:.62rem}
+
+.tcols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.tcols{grid-template-columns:1fr}}
+.tcard{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.tcard-t{font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;margin-bottom:8px}
+.tcard ul{list-style:none;padding:0}
+.tcard ul li{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text2);line-height:2;padding-left:12px;position:relative}
+.tcard ul li::before{content:'›';position:absolute;left:0;color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="badge">UNIR · Algoritmia y Complejidad · Tema 9</div>
+  <h1><span class="g1">GREEDY</span> <span class="g2">ARENA</span></h1>
+  <p class="hsub">// algoritmos voraces — aprende tomando decisiones óptimas</p>
+  <div class="xprow">
+    <span class="xpl">XP</span>
+    <div class="xpt"><div class="xpf" id="xpf"></div></div>
+    <span class="xpn" id="xpn">0 / 500</span>
+    <div class="lives" id="lives"><span class="life">❤️</span><span class="life">❤️</span><span class="life">❤️</span></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="go('teoria')" id="tab-teoria"><span class="ck">✓</span>📖 Estrategia</button>
+  <button class="tab" onclick="go('monedas')" id="tab-monedas"><span class="ck">✓</span>🪙 Monedas</button>
+  <button class="tab" onclick="go('mochila')" id="tab-mochila"><span class="ck">✓</span>🎒 Mochila</button>
+  <button class="tab" onclick="go('viajante')" id="tab-viajante"><span class="ck">✓</span>🗺️ Viajante</button>
+  <button class="tab" onclick="go('quiz')" id="tab-quiz"><span class="ck">✓</span>🏆 Test Final</button>
+</div>
+
+<!-- ══ PANEL 1: TEORÍA ══ -->
+<div class="panel active" id="panel-teoria">
+  <div class="sec"><h2 style="color:var(--gold)">LA ESTRATEGIA GREEDY</h2><p>Elige siempre el candidato localmente óptimo esperando llegar a la solución global óptima.</p></div>
+  <div class="tcols" style="margin-bottom:14px">
+    <div class="tcard" style="border-color:rgba(255,209,102,.3)">
+      <div class="tcard-t" style="color:var(--gold)">⚙️ 5 Elementos Greedy</div>
+      <ul>
+        <li><strong>Candidatos:</strong> todos los posibles elementos</li>
+        <li><strong>Función de selección:</strong> elige el mejor candidato</li>
+        <li><strong>Función prometedora:</strong> ¿podemos seguir añadiendo?</li>
+        <li><strong>Función objetivo:</strong> maximizar o minimizar</li>
+        <li><strong>Función de coste:</strong> ¿es solución el subconjunto?</li>
+      </ul>
+    </div>
+    <div class="tcard" style="border-color:rgba(6,214,160,.3)">
+      <div class="tcard-t" style="color:var(--green)">🔄 Cómo funciona</div>
+      <ul>
+        <li>Avanza por <strong>etapas</strong>, una decisión por etapa</li>
+        <li>Nunca <strong>vuelve atrás</strong> (irrevocable)</li>
+        <li>Escoge el <strong>óptimo local</strong> en cada paso</li>
+        <li>Espera que conduzca al <strong>óptimo global</strong></li>
+        <li>Normalmente es un algoritmo <strong>iterativo</strong></li>
+        <li>No siempre garantiza la solución óptima global</li>
+      </ul>
+    </div>
+    <div class="tcard" style="border-color:rgba(0,180,216,.3)">
+      <div class="tcard-t" style="color:var(--cyan)">📊 Complejidad</div>
+      <ul>
+        <li>El bucle greedy: <strong>O(n)</strong></li>
+        <li>Con ordenación previa: <strong>O(n log n)</strong></li>
+        <li>Problema de la mochila: <strong>O(n log n)</strong></li>
+        <li>Más eficiente que fuerza bruta</li>
+      </ul>
+    </div>
+    <div class="tcard" style="border-color:rgba(155,93,229,.3)">
+      <div class="tcard-t" style="color:var(--purple)">🎯 Aplicaciones clásicas</div>
+      <ul>
+        <li>Cambio de monedas</li>
+        <li>Problema del viajante (aprox.)</li>
+        <li>Problema de la mochila fraccionaria</li>
+        <li>Algoritmo de Dijkstra</li>
+        <li>Algoritmo de Kruskal / Prim</li>
+      </ul>
+    </div>
+  </div>
+  <!-- Reto identificar elementos -->
+  <div class="card g">
+    <div class="ct g"><span>🎯</span>IDENTIFICA LOS ELEMENTOS GREEDY</div>
+    <p class="desc">Para el problema del cambio de monedas, arrastra/selecciona el elemento correcto.</p>
+    <div id="teoria-reto"></div>
+    <div class="log" id="teoria-log">Selecciona la respuesta correcta.</div>
+  </div>
+  <div style="text-align:center;margin-top:8px">
+    <button class="btn btn-gr" onclick="completeTeoría()" style="font-size:.82rem;padding:11px 28px">✓ ¡Entendido! Siguiente →</button>
+  </div>
+</div>
+
+<!-- ══ PANEL 2: MONEDAS ══ -->
+<div class="panel" id="panel-monedas">
+  <div class="sec"><h2 style="color:var(--gold)">CAMBIO DE MONEDAS — BUCLE GREEDY</h2><p>Selecciona siempre la moneda de mayor valor posible. Observa cómo el greedy construye la solución.</p></div>
+  <div class="card g">
+    <div class="ct g"><span>🪙</span>DISPENSADOR DE CAMBIO</div>
+    <div class="change-target">Cantidad a devolver:</div>
+    <div class="amount-big" id="coin-amount">0</div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-g" onclick="newCoinProblem()">🎲 Nueva cantidad</button>
+      <button class="btn btn-gr" onclick="coinGreedyAuto()" id="coin-auto-btn">⚡ Auto greedy</button>
+      <button class="btn btn-n" onclick="resetCoins()">↺ Reset</button>
+    </div>
+    <p class="desc" style="text-align:center;margin-bottom:10px">Pulsa cada moneda para añadirla manualmente, o usa "Auto greedy".</p>
+    <div class="coin-scene" id="coin-scene"></div>
+    <div style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text2);margin-top:10px">Solución parcial:</div>
+    <div class="solution-row" id="coin-solution"></div>
+    <div class="log" id="coin-log">Restante: <span id="coin-remaining">—</span></div>
+    <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text2)">Monedas usadas: <span id="coin-count-used" style="color:var(--gold);font-weight:700">0</span></div>
+  </div>
+  <!-- Reto: ¿greedy óptimo aquí? -->
+  <div class="card cy">
+    <div class="ct cy"><span>⚠️</span>LÍMITE DEL GREEDY — ¿SIEMPRE ES ÓPTIMO?</div>
+    <div id="coin-limit-reto"></div>
+  </div>
+</div>
+
+<!-- ══ PANEL 3: MOCHILA ══ -->
+<div class="panel" id="panel-mochila">
+  <div class="sec"><h2 style="color:var(--green)">PROBLEMA DE LA MOCHILA FRACCIONARIA</h2><p>Ordena por ratio beneficio/peso (b/p) descendente. Llena la mochila maximizando el beneficio.</p></div>
+  <div class="card gr">
+    <div class="ct gr"><span>🎒</span>MOCHILA — M = <span id="bag-cap">15</span> kg</div>
+    <p class="desc">Los objetos están ordenados por b/p (función de selección greedy). Pulsa "Siguiente objeto" para ver el algoritmo en acción.</p>
+    <div class="knapsack-scene">
+      <div>
+        <p style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text2);margin-bottom:8px">CANDIDATOS (ordenados por b/p ↓)</p>
+        <div class="item-list" id="item-list"></div>
+      </div>
+      <div class="bag-visual">
+        <p style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text2);margin-bottom:6px">MOCHILA</p>
+        <div style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text2)">Peso: <span id="bag-weight-cur" style="color:var(--green);font-weight:700">0</span> / <span id="bag-weight-max">15</span> kg</div>
+        <div class="bag-weight"><div class="bag-fill" id="bag-fill" style="width:0%;background:linear-gradient(90deg,var(--green),var(--cyan))"></div></div>
+        <div style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text2)">Beneficio: <span id="bag-benefit" style="color:var(--gold);font-weight:700">0</span></div>
+        <div class="bag-items" id="bag-items"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-gr" onclick="bagStep()" id="bag-step-btn">▶ Siguiente objeto</button>
+      <button class="btn btn-cy" onclick="bagAuto()">⚡ Auto</button>
+      <button class="btn btn-n" onclick="bagReset()">↺ Nueva mochila</button>
+    </div>
+    <div class="log" id="bag-log">El greedy tomará primero el objeto con mayor ratio b/p.</div>
+  </div>
+  <!-- Quiz rápido mochila -->
+  <div class="card pu">
+    <div class="ct pu"><span>❓</span>PREGUNTA — PROBLEMA DE LA MOCHILA</div>
+    <div id="bag-quiz"></div>
+  </div>
+</div>
+
+<!-- ══ PANEL 4: VIAJANTE ══ -->
+<div class="panel" id="panel-viajante">
+  <div class="sec"><h2 style="color:var(--cyan)">PROBLEMA DEL VIAJANTE — VECINO MÁS CERCANO</h2><p>El greedy elige siempre la ciudad más cercana no visitada. No garantiza la ruta óptima global.</p></div>
+  <div class="card cy">
+    <div class="ct cy"><span>🗺️</span>CICLO HAMILTONIANO MÍNIMO (aprox.)</div>
+    <p class="desc">Pulsa "Siguiente ciudad" para que el greedy elija la más cercana. Al final verás la ruta total.</p>
+    <svg class="tsp-svg" id="tsp-svg" viewBox="0 0 500 300" height="300"></svg>
+    <div class="tsp-controls">
+      <button class="btn btn-cy" onclick="tspStep()" id="tsp-step-btn">▶ Siguiente ciudad</button>
+      <button class="btn btn-cy" onclick="tspAuto()">⚡ Auto</button>
+      <button class="btn btn-n" onclick="tspReset()">↺ Nuevo mapa</button>
+    </div>
+    <div class="log" id="tsp-log">Pulsa "Siguiente ciudad" para iniciar el recorrido greedy.</div>
+    <div style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text2);margin-top:8px">Distancia total: <span id="tsp-dist" style="color:var(--cyan);font-weight:700">0</span></div>
+  </div>
+  <div class="card re">
+    <div class="ct re"><span>⚠️</span>LIMITACIÓN DEL GREEDY</div>
+    <p class="desc">El greedy para el viajante NO siempre da la solución óptima. Prueba a elegir tú mismo otra ruta y compara.</p>
+    <div id="tsp-limit-quiz"></div>
+  </div>
+</div>
+
+<!-- ══ PANEL 5: QUIZ ══ -->
+<div class="panel" id="panel-quiz">
+  <div class="sec"><h2 style="color:var(--purple)">TEST FINAL — TEMA 9</h2><p>10 preguntas del test oficial de la UNIR sobre algoritmos greedy.</p></div>
+  <div class="card pu">
+    <div class="ct pu"><span>🏆</span>EVALUACIÓN FINAL</div>
+    <div class="qprog" id="qprog"></div>
+    <div id="quiz-body"></div>
+    <div class="quiz-final" id="quiz-final">
+      <div class="fscore" id="fscore">0/10</div>
+      <p style="font-family:'DM Mono',monospace;font-size:.82rem;color:var(--text2);margin-top:10px" id="fmsg"></p>
+      <button class="btn btn-g" style="margin-top:18px;padding:10px 28px" onclick="startQuiz()">↺ Repetir</button>
+    </div>
+  </div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══ GLOBAL ══ */
+let xp=0,maxXP=500,livesLeft=3;
+function addXP(n){xp=Math.min(xp+n,maxXP);document.getElementById('xpf').style.width=(xp/maxXP*100)+'%';document.getElementById('xpn').textContent=xp+' / '+maxXP;if(xp>=maxXP)toast('🏆 ¡XP máximo!','good')}
+function loseLife(){if(livesLeft<=0)return;livesLeft--;document.querySelectorAll('.life')[livesLeft].classList.add('lost')}
+function toast(msg,type='info'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');setTimeout(()=>t.className='toast',2400)}
+function go(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));document.getElementById('panel-'+id).classList.add('active');document.getElementById('tab-'+id).classList.add('active');if(id==='monedas')initMonedas();if(id==='mochila')bagReset();if(id==='viajante')tspReset();if(id==='quiz')startQuiz()}
+
+/* ══ PANEL 1: TEORÍA RETO ══ */
+const TEORIA_RETOS=[
+  {q:'¿Cuál es la FUNCIÓN DE SELECCIÓN en el problema del cambio de monedas?',opts:['La suma de todas las monedas','La moneda de mayor valor que no supere el resto a devolver','La moneda más pequeña disponible','El número total de monedas usadas'],ans:1,exp:'La función de selección elige siempre la moneda de mayor valor que no supere la cantidad restante. Es la decisión greedy en cada paso.'},
+  {q:'¿Qué es una "solución prometedora" en la estrategia greedy?',opts:['La mejor solución posible','Un subconjunto que cumple las restricciones y puede extenderse','Cualquier solución parcial','La solución final del algoritmo'],ans:1,exp:'Prometedora = es posible seguir añadiendo candidatos hasta conseguir la solución global. Un candidato que viola las restricciones no es prometedor.'},
+  {q:'¿Por qué el greedy para monedas funciona con los sistemas monetarios reales?',opts:['Porque tienen monedas de 1','Porque sus valores forman un sistema canónico donde el greedy siempre es óptimo','Porque solo hay 7 denominaciones','Por convenio internacional'],ans:1,exp:'Con sistemas monetarios estándar (1,5,25,50,100,200,500) el greedy siempre da la solución óptima. Con monedas como 7 o 13, no siempre funciona.'},
+];
+let tRetoIdx=0;
+function initTeoriaReto(){tRetoIdx=0;renderTeoriaReto()}
+function renderTeoriaReto(){
+  const r=TEORIA_RETOS[tRetoIdx];
+  document.getElementById('teoria-reto').innerHTML=`<p class="qq">${r.q}</p><div class="qopts">${r.opts.map((o,i)=>`<button class="qopt" onclick="answerTeoria(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div><div class="qfb" id="t-fb"></div>`;
+  document.getElementById('teoria-log').textContent='Selecciona la respuesta correcta.';
+}
+window.answerTeoria=function(c){
+  const r=TEORIA_RETOS[tRetoIdx];
+  document.querySelectorAll('#teoria-reto .qopt').forEach(o=>o.classList.add('dis'));
+  document.querySelectorAll('#teoria-reto .qopt')[r.ans].classList.add('correct');
+  const fb=document.getElementById('t-fb');
+  if(c===r.ans){document.querySelectorAll('#teoria-reto .qopt')[c].classList.add('correct');fb.className='qfb show ok';fb.textContent='✓ '+r.exp;addXP(15);toast('+15 XP','good')}
+  else{document.querySelectorAll('#teoria-reto .qopt')[c].classList.add('wrong');fb.className='qfb show bad';fb.textContent='✗ '+r.exp;loseLife()}
+  setTimeout(()=>{tRetoIdx=(tRetoIdx+1)%TEORIA_RETOS.length;renderTeoriaReto()},2200);
+};
+function completeTeoría(){document.getElementById('tab-teoria').classList.add('done');addXP(20);toast('+20 XP — Teoría completada!','good');go('monedas')}
+initTeoriaReto();
+
+/* ══ PANEL 2: MONEDAS ══ */
+const COIN_VALS=[500,200,100,50,25,5,1];
+const COIN_CLS={500:'c500',200:'c200',100:'c100',50:'c50',25:'c25',5:'c5',1:'c1'};
+let coinTarget=0,coinRemaining=0,coinSolution=[],coinUsed={};
+
+function initMonedas(){newCoinProblem()}
+function newCoinProblem(){
+  coinTarget=Math.floor(Math.random()*480)+20;
+  coinTarget=Math.round(coinTarget/5)*5||25;
+  coinRemaining=coinTarget;
+  coinSolution=[];
+  COIN_VALS.forEach(v=>coinUsed[v]=0);
+  document.getElementById('coin-amount').textContent=coinTarget+' cts';
+  document.getElementById('coin-remaining').textContent=coinRemaining+' cts restantes';
+  document.getElementById('coin-solution').innerHTML='';
+  document.getElementById('coin-count-used').textContent=0;
+  document.getElementById('coin-log').innerHTML=`Objetivo: <span class="hi">${coinTarget} cts</span>. Elige la moneda más grande posible.`;
+  renderCoins();
+  document.getElementById('coin-auto-btn').disabled=false;
+}
+function renderCoins(){
+  const sc=document.getElementById('coin-scene');
+  sc.innerHTML='';
+  COIN_VALS.forEach(v=>{
+    const d=document.createElement('div');
+    const usable=v<=coinRemaining&&coinRemaining>0;
+    d.className='coin '+COIN_CLS[v]+(usable?'':' used');
+    d.innerHTML=(v>=100?'€'+(v/100).toFixed(v%100===0?0:2):v+' ct')+(coinUsed[v]>0?`<span class="coin-count">${coinUsed[v]}</span>`:'');
+    if(usable)d.onclick=()=>useCoin(v);
+    sc.appendChild(d);
+  });
+}
+function useCoin(v){
+  if(v>coinRemaining)return;
+  coinUsed[v]++;
+  coinRemaining-=v;
+  coinSolution.push(v);
+  const sol=document.getElementById('coin-solution');
+  const sp=document.createElement('span');
+  sp.className='sol-coin';
+  sp.textContent=v>=100?'€'+(v/100).toFixed(v%100===0?0:2):v+'ct';
+  sol.appendChild(sp);
+  document.getElementById('coin-count-used').textContent=coinSolution.length;
+  document.getElementById('coin-remaining').textContent=coinRemaining+' cts restantes';
+  if(coinRemaining===0){
+    document.getElementById('coin-log').innerHTML=`<span class="ok">✓ ¡Cambio exacto! ${coinSolution.length} monedas usadas. Solución óptima greedy.</span>`;
+    addXP(25);toast('+25 XP — ¡Cambio exacto!','good');
+    document.getElementById('coin-auto-btn').disabled=true;
+  } else {
+    const best=COIN_VALS.find(cv=>cv<=coinRemaining)||0;
+    document.getElementById('coin-log').innerHTML=`Restante: <span class="hi">${coinRemaining} cts</span>. Función de selección → mejor candidato: <span class="warn">${best>=100?'€'+(best/100):best+' ct'}</span>`;
+  }
+  renderCoins();
+}
+function coinGreedyAuto(){
+  document.getElementById('coin-auto-btn').disabled=true;
+  let timer=0;
+  COIN_VALS.forEach(v=>{
+    while(coinRemaining>=v&&coinRemaining>0){
+      const vCopy=v;
+      setTimeout(()=>useCoin(vCopy),timer);
+      timer+=280;
+    }
+  });
+}
+function resetCoins(){coinRemaining=coinTarget;coinSolution=[];COIN_VALS.forEach(v=>coinUsed[v]=0);document.getElementById('coin-solution').innerHTML='';document.getElementById('coin-count-used').textContent=0;document.getElementById('coin-remaining').textContent=coinRemaining+' cts';document.getElementById('coin-log').textContent='Reset. Intenta de nuevo.';document.getElementById('coin-auto-btn').disabled=false;renderCoins()}
+
+// Límite del greedy — reto
+const LIMIT_RETOS=[
+  {q:'Sistema: monedas de {1, 6, 10}. Cambio: 12. ¿Cuántas monedas da el greedy?',opts:['2 monedas (6+6)','3 monedas (10+1+1)','1 moneda','4 monedas'],ans:1,exp:'Greedy elige 10 primero, luego 1+1 = 3 monedas. Pero la óptima es 6+6 = 2 monedas. ¡El greedy NO es óptimo con este sistema!'},
+  {q:'¿Por qué el greedy de monedas SÍ funciona con euros/céntimos?',opts:['Por ley europea','Porque 1 siempre cubre el resto','Porque el sistema monetario actual forma un conjunto canónico donde la elección local siempre conduce al óptimo global','Porque hay exactamente 7 denominaciones'],ans:2,exp:'Los sistemas monetarios reales están diseñados para que el greedy sea óptimo. No todos los sistemas arbitrarios lo son.'},
+];
+let limitIdx=0;
+function initCoinLimit(){limitIdx=0;renderCoinLimit()}
+function renderCoinLimit(){
+  const r=LIMIT_RETOS[limitIdx];
+  document.getElementById('coin-limit-reto').innerHTML=`<p class="qq">${r.q}</p><div class="qopts">${r.opts.map((o,i)=>`<button class="qopt" onclick="answerCoinLimit(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div><div class="qfb" id="cl-fb"></div>`;
+}
+window.answerCoinLimit=function(c){
+  const r=LIMIT_RETOS[limitIdx];
+  document.querySelectorAll('#coin-limit-reto .qopt').forEach(o=>o.classList.add('dis'));
+  document.querySelectorAll('#coin-limit-reto .qopt')[r.ans].classList.add('correct');
+  const fb=document.getElementById('cl-fb');
+  if(c===r.ans){document.querySelectorAll('#coin-limit-reto .qopt')[c].classList.add('correct');fb.className='qfb show ok';fb.textContent='✓ '+r.exp;addXP(20)}
+  else{document.querySelectorAll('#coin-limit-reto .qopt')[c].classList.add('wrong');fb.className='qfb show bad';fb.textContent='✗ '+r.exp;loseLife()}
+  setTimeout(()=>{limitIdx=(limitIdx+1)%LIMIT_RETOS.length;renderCoinLimit()},2300);
+};
+initCoinLimit();
+
+/* ══ PANEL 3: MOCHILA ══ */
+const BAG_ITEMS_DATA=[
+  {name:'Oro',emoji:'🥇',peso:3,beneficio:9},
+  {name:'Plata',emoji:'🥈',peso:4,beneficio:10},
+  {name:'Rubí',emoji:'💎',peso:2,beneficio:4},
+  {name:'Ordenador',emoji:'💻',peso:6,beneficio:10},
+  {name:'Cámara',emoji:'📷',peso:5,beneficio:7},
+  {name:'Libro',emoji:'📚',peso:1,beneficio:1},
+];
+let bagCap=15,bagWeightCur=0,bagBenefit=0,bagStepIdx=0,bagItems=[],bagInBag=[];
+
+function bagReset(){
+  bagCap=15;bagWeightCur=0;bagBenefit=0;bagStepIdx=0;bagInBag=[];
+  bagItems=BAG_ITEMS_DATA.map(i=>({...i,ratio:i.beneficio/i.peso,xi:0}));
+  bagItems.sort((a,b)=>b.ratio-a.ratio);
+  document.getElementById('bag-cap').textContent=bagCap;
+  document.getElementById('bag-weight-max').textContent=bagCap;
+  document.getElementById('bag-weight-cur').textContent=0;
+  document.getElementById('bag-benefit').textContent=0;
+  document.getElementById('bag-fill').style.width='0%';
+  document.getElementById('bag-items').innerHTML='';
+  document.getElementById('bag-log').textContent='El greedy tomará primero el objeto con mayor ratio b/p.';
+  document.getElementById('bag-step-btn').disabled=false;
+  renderItemList();
+  initBagQuiz();
+}
+function renderItemList(){
+  const c=document.getElementById('item-list');
+  c.innerHTML='';
+  bagItems.forEach((it,i)=>{
+    const d=document.createElement('div');
+    const cls=it.xi===1?'full':it.xi>0?'partial':i===bagStepIdx?'selected':'';
+    d.className='item-row '+cls;
+    d.innerHTML=`<span class="item-emoji">${it.emoji}</span><div class="item-info"><div class="item-name">${it.name}</div><div class="item-stats">Peso:${it.peso}kg Beneficio:${it.beneficio} b/p:<strong style="color:var(--gold)">${it.ratio.toFixed(2)}</strong></div></div><span class="item-ratio" style="color:${i===bagStepIdx?'var(--gold)':'var(--text2)'}">${it.xi>0?(it.xi*100).toFixed(0)+'%':'—'}</span>`;
+    c.appendChild(d);
+  });
+}
+function bagStep(){
+  if(bagStepIdx>=bagItems.length||bagWeightCur>=bagCap){
+    document.getElementById('bag-log').innerHTML=`<span class="ok">✓ Mochila completa. Beneficio total: ${bagBenefit.toFixed(2)}</span>`;
+    document.getElementById('bag-step-btn').disabled=true;
+    addXP(30);document.getElementById('tab-mochila').classList.add('done');
+    return;
+  }
+  const it=bagItems[bagStepIdx];
+  const espacio=bagCap-bagWeightCur;
+  if(it.peso<=espacio){
+    it.xi=1.0;
+    bagWeightCur+=it.peso;
+    bagBenefit+=it.beneficio;
+    const d=document.createElement('div');d.className='bag-item full';d.textContent=`${it.emoji} ${it.name} — 100% (${it.peso}kg, +${it.beneficio})`;
+    document.getElementById('bag-items').appendChild(d);
+    document.getElementById('bag-log').innerHTML=`<span class="ok">✓ ${it.name} entra completo (ratio ${it.ratio.toFixed(2)}). Peso: +${it.peso}kg</span>`;
+  } else if(espacio>0){
+    it.xi=espacio/it.peso;
+    bagWeightCur=bagCap;
+    bagBenefit+=it.xi*it.beneficio;
+    const d=document.createElement('div');d.className='bag-item partial';d.textContent=`${it.emoji} ${it.name} — ${(it.xi*100).toFixed(0)}% (${espacio}kg, +${(it.xi*it.beneficio).toFixed(1)})`;
+    document.getElementById('bag-items').appendChild(d);
+    document.getElementById('bag-log').innerHTML=`<span class="hi">⚠ ${it.name} entra parcialmente: ${(it.xi*100).toFixed(0)}%. Mochila llena.</span>`;
+  } else {
+    document.getElementById('bag-log').innerHTML=`<span class="warn">${it.name} no cabe. Mochila llena.</span>`;
+  }
+  bagStepIdx++;
+  document.getElementById('bag-weight-cur').textContent=bagWeightCur.toFixed(1);
+  document.getElementById('bag-benefit').textContent=bagBenefit.toFixed(1);
+  document.getElementById('bag-fill').style.width=(bagWeightCur/bagCap*100)+'%';
+  renderItemList();
+}
+let bagAutoTimer=null;
+function bagAuto(){
+  function step(){if(bagStepIdx<bagItems.length&&bagWeightCur<bagCap){bagStep();bagAutoTimer=setTimeout(step,500)}else bagStep()}
+  step();
+}
+
+// Bag quiz rápido
+const BAG_QS=[
+  {q:'¿Cuál es el criterio de la función de selección greedy para la mochila?',opts:['Mayor peso primero','Mayor beneficio primero','Mayor ratio beneficio/peso (b/p) primero','Menor peso primero'],ans:2,exp:'El greedy ordena por b/p descendente: maximiza el beneficio por unidad de peso, tomando primero lo más "rentable".'},
+  {q:'¿Qué complejidad tiene el algoritmo de la mochila fraccionaria?',opts:['O(n)','O(n²)','O(n log n)','O(2ⁿ)'],ans:2,exp:'O(n log n) por la ordenación previa. El bucle greedy es O(n), pero domina la ordenación: O(n log n) total.'},
+  {q:'¿Qué diferencia hay entre mochila fraccionaria y mochila 0/1?',opts:['No hay diferencia','En la fraccionaria se pueden incluir fracciones de objetos; en 0/1 solo entero o nada','La 0/1 es más sencilla','La fraccionaria usa programación dinámica'],ans:1,exp:'El greedy resuelve ÓPTIMAMENTE la mochila fraccionaria (xi entre 0 y 1). La mochila 0/1 (solo entero o nada) requiere programación dinámica.'},
+];
+let bagQIdx=0;
+function initBagQuiz(){bagQIdx=0;renderBagQuiz()}
+function renderBagQuiz(){
+  const q=BAG_QS[bagQIdx];
+  document.getElementById('bag-quiz').innerHTML=`<p class="desc" style="margin-bottom:8px">(${bagQIdx+1}/${BAG_QS.length})</p><p class="qq">${q.q}</p><div class="qopts">${q.opts.map((o,i)=>`<button class="qopt" onclick="answerBagQ(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div><div class="qfb" id="bq-fb"></div>`;
+}
+window.answerBagQ=function(c){
+  const q=BAG_QS[bagQIdx];
+  document.querySelectorAll('#bag-quiz .qopt').forEach(o=>o.classList.add('dis'));
+  document.querySelectorAll('#bag-quiz .qopt')[q.ans].classList.add('correct');
+  const fb=document.getElementById('bq-fb');
+  if(c===q.ans){document.querySelectorAll('#bag-quiz .qopt')[c].classList.add('correct');fb.className='qfb show ok';fb.textContent='✓ '+q.exp;addXP(15);toast('+15 XP','good')}
+  else{document.querySelectorAll('#bag-quiz .qopt')[c].classList.add('wrong');fb.className='qfb show bad';fb.textContent='✗ '+q.exp;loseLife()}
+  setTimeout(()=>{bagQIdx=(bagQIdx+1)%BAG_QS.length;renderBagQuiz()},2300);
+};
+
+/* ══ PANEL 4: VIAJANTE ══ */
+const CITIES=[{n:'Madrid',x:200,y:150},{n:'Barcelona',x:390,y:80},{n:'Valencia',x:350,y:200},{n:'Sevilla',x:100,y:240},{n:'Bilbao',x:230,y:50},{n:'Zaragoza',x:310,y:120}];
+let tspVisited=[],tspCurrent=0,tspPath=[],tspTotalDist=0,tspAutoTimer=null;
+
+function dist(a,b){return Math.round(Math.sqrt(Math.pow(CITIES[a].x-CITIES[b].x,2)+Math.pow(CITIES[a].y-CITIES[b].y,2)))}
+
+function tspReset(){
+  tspVisited=[0];tspCurrent=0;tspPath=[0];tspTotalDist=0;
+  clearTimeout(tspAutoTimer);
+  document.getElementById('tsp-step-btn').disabled=false;
+  document.getElementById('tsp-dist').textContent=0;
+  document.getElementById('tsp-log').textContent='Inicio: '+CITIES[0].n+'. El greedy elige siempre la ciudad más cercana no visitada.';
+  renderTSP();
+  initTSPLimitQuiz();
+}
+function renderTSP(comparing=-1){
+  const svg=document.getElementById('tsp-svg');svg.innerHTML='';
+  // edges (path)
+  for(let i=1;i<tspPath.length;i++){
+    const a=tspPath[i-1],b=tspPath[i];
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',CITIES[a].x);l.setAttribute('y1',CITIES[a].y);
+    l.setAttribute('x2',CITIES[b].x);l.setAttribute('y2',CITIES[b].y);
+    l.setAttribute('stroke','rgba(255,209,102,.6)');l.setAttribute('stroke-width','2');l.setAttribute('stroke-dasharray',i===tspPath.length-1?'':'none');
+    svg.appendChild(l);
+    // dist label
+    const tx=(CITIES[a].x+CITIES[b].x)/2,ty=(CITIES[a].y+CITIES[b].y)/2;
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',tx+4);t.setAttribute('y',ty-4);t.setAttribute('fill','rgba(255,209,102,.7)');
+    t.setAttribute('font-size','9');t.setAttribute('font-family','DM Mono, monospace');
+    t.textContent=dist(a,b);svg.appendChild(t);
+  }
+  // close path if done
+  if(tspVisited.length===CITIES.length){
+    const a=tspPath[tspPath.length-1],b=tspPath[0];
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',CITIES[a].x);l.setAttribute('y1',CITIES[a].y);
+    l.setAttribute('x2',CITIES[b].x);l.setAttribute('y2',CITIES[b].y);
+    l.setAttribute('stroke','rgba(6,214,160,.5)');l.setAttribute('stroke-width','1.5');l.setAttribute('stroke-dasharray','4 3');
+    svg.appendChild(l);
+  }
+  // nodes
+  CITIES.forEach((c,i)=>{
+    const visited=tspVisited.includes(i),isCur=i===tspCurrent,isComp=i===comparing;
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',c.x);circle.setAttribute('cy',c.y);circle.setAttribute('r',18);
+    circle.setAttribute('fill',isCur?'rgba(255,209,102,.25)':visited?'rgba(6,214,160,.15)':isComp?'rgba(0,180,216,.15)':'rgba(255,255,255,.05)');
+    circle.setAttribute('stroke',isCur?'#FFD166':visited?'#06D6A0':isComp?'#00B4D8':'#2E3248');
+    circle.setAttribute('stroke-width',isCur?'2.5':'1.5');
+    const text=document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x',c.x);text.setAttribute('y',c.y+1);
+    text.setAttribute('text-anchor','middle');text.setAttribute('dominant-baseline','central');
+    text.setAttribute('fill',isCur?'#FFD166':visited?'#06D6A0':'#8899AA');
+    text.setAttribute('font-size','9');text.setAttribute('font-family','DM Mono,monospace');text.setAttribute('font-weight','700');
+    text.textContent=c.n.substring(0,3).toUpperCase();
+    g.appendChild(circle);g.appendChild(text);svg.appendChild(g);
+  });
+}
+function tspStep(){
+  if(tspVisited.length===CITIES.length){
+    const back=dist(tspCurrent,0);tspTotalDist+=back;
+    document.getElementById('tsp-dist').textContent=tspTotalDist;
+    document.getElementById('tsp-log').innerHTML=`<span class="ok">✓ Ruta completada. Regreso a ${CITIES[0].n} (+${back}). Total: ${tspTotalDist}</span>`;
+    document.getElementById('tsp-step-btn').disabled=true;
+    addXP(30);document.getElementById('tab-viajante').classList.add('done');
+    renderTSP();return;
+  }
+  const unvisited=CITIES.map((_,i)=>i).filter(i=>!tspVisited.includes(i));
+  if(!unvisited.length)return;
+  let nearest=unvisited[0],minD=dist(tspCurrent,unvisited[0]);
+  unvisited.forEach(i=>{const d=dist(tspCurrent,i);if(d<minD){minD=d;nearest=i}});
+  tspTotalDist+=minD;
+  tspVisited.push(nearest);
+  tspPath.push(nearest);
+  document.getElementById('tsp-dist').textContent=tspTotalDist;
+  document.getElementById('tsp-log').innerHTML=`Desde <span class="hi">${CITIES[tspCurrent].n}</span> → <span class="warn">${CITIES[nearest].n}</span> (distancia: ${minD}). Restantes: ${CITIES.length-tspVisited.length}`;
+  tspCurrent=nearest;
+  renderTSP();
+}
+function tspAuto(){
+  function step(){if(tspVisited.length<=CITIES.length){tspStep();tspAutoTimer=setTimeout(step,500)}}
+  step();
+}
+
+const TSP_LQ=[
+  {q:'¿Por qué el greedy del viajante NO garantiza la solución óptima global?',opts:['Porque es demasiado lento','Porque cada decisión local (ciudad más cercana) puede cerrar caminos más eficientes a largo plazo','Porque no usa recursividad','Porque no visita todas las ciudades'],ans:1,exp:'El greedy nunca vuelve atrás. Elegir el vecino más cercano en cada paso puede llevar a una ruta subóptima porque no considera las consecuencias futuras.'},
+  {q:'¿Qué estructura matemática usamos para modelar el problema del viajante?',opts:['Un árbol binario','Un heap','Un grafo conexo ponderado','Una lista enlazada'],ans:2,exp:'El viajante se modela como un grafo conexo ponderado: ciudades = vértices, carreteras = aristas ponderadas por distancia. Se busca el ciclo Hamiltoniano de coste mínimo.'},
+];
+let tspLQIdx=0;
+function initTSPLimitQuiz(){tspLQIdx=0;renderTSPLQ()}
+function renderTSPLQ(){
+  const q=TSP_LQ[tspLQIdx];
+  document.getElementById('tsp-limit-quiz').innerHTML=`<p class="desc" style="margin-bottom:8px">(${tspLQIdx+1}/${TSP_LQ.length})</p><p class="qq">${q.q}</p><div class="qopts">${q.opts.map((o,i)=>`<button class="qopt" onclick="answerTSPLQ(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div><div class="qfb" id="tl-fb"></div>`;
+}
+window.answerTSPLQ=function(c){
+  const q=TSP_LQ[tspLQIdx];
+  document.querySelectorAll('#tsp-limit-quiz .qopt').forEach(o=>o.classList.add('dis'));
+  document.querySelectorAll('#tsp-limit-quiz .qopt')[q.ans].classList.add('correct');
+  const fb=document.getElementById('tl-fb');
+  if(c===q.ans){document.querySelectorAll('#tsp-limit-quiz .qopt')[c].classList.add('correct');fb.className='qfb show ok';fb.textContent='✓ '+q.exp;addXP(20)}
+  else{document.querySelectorAll('#tsp-limit-quiz .qopt')[c].classList.add('wrong');fb.className='qfb show bad';fb.textContent='✗ '+q.exp;loseLife()}
+  setTimeout(()=>{tspLQIdx=(tspLQIdx+1)%TSP_LQ.length;renderTSPLQ()},2300);
+};
+
+/* ══ QUIZ FINAL ══ */
+const QUIZ=[
+  {q:'La técnica se denomina greedy porque:',opts:['Divide el problema en trozos grandes para resolverlo','Escoge siempre el candidato más prometedor','Escoge siempre el candidato más grande','Examina todas las combinaciones posibles'],ans:1,exp:'Greedy (ávido/voraz) significa que en cada paso escoge el candidato más prometedor sin considerar consecuencias futuras.'},
+  {q:'Los algoritmos greedy son, normalmente:',opts:['Recursivos','Iterativos','Logarítmicos','Exponenciales'],ans:1,exp:'El bucle greedy es un bucle iterativo que nunca retrocede. Es una de sus características fundamentales.'},
+  {q:'¿En qué sentido usa greedy la palabra "prometedor"?',opts:['El candidato más prometedor es el primero de la lista','El candidato más prometedor es el último en el que habríamos pensado','El candidato más prometedor es el último seleccionado','El candidato más prometedor es el que nos conduce hacia la solución'],ans:3,exp:'Prometedor = el candidato que, al añadirlo a la solución parcial, mantiene la posibilidad de llegar a la solución completa.'},
+  {q:'¿Dónde hay que buscar la función objetivo en un algoritmo greedy?',opts:['En el enunciado del problema','En el bucle greedy','En la inicialización de los candidatos','En el valor de los candidatos más prometedores'],ans:0,exp:'La función objetivo viene dada por el enunciado: minimizar monedas, maximizar beneficio, etc.'},
+  {q:'La función de selección es vital en un algoritmo greedy porque:',opts:['Nos indica si hemos llegado a la solución completa','Nos proporciona el candidato más prometedor no seleccionado aún','Nos proporciona el candidato más veces elegido','Es idéntica a la función objetivo'],ans:1,exp:'La función de selección es el corazón del greedy: elige en cada paso el mejor candidato disponible no seleccionado.'},
+  {q:'¿Por qué son buenos los algoritmos greedy?',opts:['Porque son recursivamente mejorables','Porque nunca se arrepienten de las decisiones que toman','Porque funcionan la mayoría del tiempo','Porque usan muy poca memoria'],ans:1,exp:'Las decisiones greedy son irrevocables: nunca vuelven atrás. Esto los hace eficientes pero no siempre óptimos globalmente.'},
+  {q:'Monedas {1,2,3,4,6} €: ¿puede greedy dar siempre el cambio mínimo?',opts:['Sí, siempre','No, a veces obtendríamos soluciones sub-óptimas','No, las respuestas serían siempre incorrectas','Sí, con tal que hubiese otra moneda de cinco euros'],ans:1,exp:'Con moneda de 6: para dar cambio de 8€, greedy daría 6+1+1=3 monedas, pero 4+4=2 monedas es mejor. Sistema no canónico → greedy sub-óptimo.'},
+  {q:'En los algoritmos greedy obtenemos la solución óptima:',opts:['Cero veces','Cero o una vez','Una vez','Varias veces'],ans:2,exp:'El greedy construye la solución por etapas y termina con UNA solución (óptima local). No explora todas las combinaciones.'},
+  {q:'¿Qué tipo de óptimos encuentra un algoritmo greedy?',opts:['Máximos','Mínimos','Óptimos locales','Óptimos globales'],ans:2,exp:'Greedy encuentra óptimos LOCALES en cada etapa. Que estos conduzcan al óptimo GLOBAL depende del problema concreto.'},
+  {q:'Las decisiones en los algoritmos greedy son:',opts:['Temporales','Tentativas','Incuestionables','Irrevocables'],ans:3,exp:'Irrevocables: una vez tomada la decisión greedy, no se reconsidera. Esto es lo que los hace eficientes pero no siempre globalmente óptimos.'},
+];
+let qIdx=0,qScore=0;
+function startQuiz(){qIdx=0;qScore=0;document.getElementById('quiz-final').className='quiz-final';renderQ()}
+function renderQ(){
+  document.getElementById('qprog').innerHTML=QUIZ.map((_,i)=>`<div class="qd ${i<qIdx?'done':i===qIdx?'active':''}"></div>`).join('');
+  const q=QUIZ[qIdx];
+  document.getElementById('quiz-body').innerHTML=`<p class="qq">${qIdx+1}. ${q.q}</p><div class="qopts">${q.opts.map((o,i)=>`<button class="qopt" onclick="answerQ(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div><div class="qfb" id="q-fb"></div><button class="btn btn-g quiz-next" id="q-next" style="margin-top:12px;display:none" onclick="nextQ()">${qIdx<QUIZ.length-1?'Siguiente →':'Ver resultado'}</button>`;
+}
+window.answerQ=function(c){
+  const q=QUIZ[qIdx];
+  document.querySelectorAll('#quiz-body .qopt').forEach(o=>o.classList.add('dis'));
+  document.querySelectorAll('#quiz-body .qopt')[q.ans].classList.add('correct');
+  const fb=document.getElementById('q-fb');
+  if(c===q.ans){document.querySelectorAll('#quiz-body .qopt')[c].classList.add('correct');fb.className='qfb show ok';fb.textContent='✓ '+q.exp;qScore++;addXP(15)}
+  else{document.querySelectorAll('#quiz-body .qopt')[c].classList.add('wrong');fb.className='qfb show bad';fb.textContent='✗ '+q.exp;loseLife()}
+  document.getElementById('q-next').style.display='block';
+};
+window.nextQ=function(){
+  qIdx++;
+  if(qIdx>=QUIZ.length){
+    document.getElementById('quiz-body').innerHTML='';
+    document.getElementById('qprog').innerHTML=QUIZ.map(()=>`<div class="qd done"></div>`).join('');
+    const fin=document.getElementById('quiz-final');fin.className='quiz-final show';
+    document.getElementById('fscore').textContent=qScore+'/'+QUIZ.length;
+    const msgs=['Repasa el tema, ¡ánimo!','Vas mejorando','¡Muy bien!','¡Excelente! Dominas greedy 🏆'];
+    document.getElementById('fmsg').textContent=qScore<=4?msgs[0]:qScore<=6?msgs[1]:qScore<=8?msgs[2]:msgs[3];
+    document.getElementById('tab-quiz').classList.add('done');addXP(60);toast('+60 XP — ¡Test completado!','good');
+  }else renderQ();
+};
+</script>
+</body>
+</html>
